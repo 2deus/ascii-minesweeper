@@ -3,26 +3,57 @@ let area = [...Array(Y)].map(e => Array(X)); //get 2d array
 const field = document.getElementsByClassName("field")[0];
 const startBtn = document.getElementsByClassName("starter")[0];
 const goalkeep = document.getElementsByClassName("goalkeeper")[0];
-let lastDir = -2, started = false, running = false, bodyparts = [], fruits = [];
-const icon = ["#", "║", "■", "•"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz";
+const icon = ["#", "║", ".", "•", "F"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz";
+let end = false, flags = 50;
 
 class Tile {
-    constructor(src, isBorder, occupiedBy, opened, index) {
+    constructor(src, isBorder, occupiedBy, opened, index, flagged) {
         this.src = src;
         this.isBorder = isBorder;
         this.occupiedBy = occupiedBy;
         this.opened = opened;
         this.index = index;
+        this.flagged = flagged;
     }
-    occupy(x = 0) {
+    occupy(x = 0, silent = false) {
         this.occupiedBy = x;
-        this.src.innerHTML = icon[x];
+        this.src.innerHTML = silent ? this.src.innerHTML : this.index !== 0 ? this.index : icon[x];
     }
 }
 
-const plr = {
-    click: undefined,
-    flags: undefined
+function revealTile(v, h) {
+    if (area[v][h].occupiedBy == 1 || area[v][h].opened || end) return;
+    if (area[v][h].occupiedBy == 3) {
+        area[v][h].occupy(3);
+        endGame();
+        return;
+    }
+        area[v][h].opened = true;
+        area[v][h].src.innerHTML = icon[2];
+        if (area[v][h].occupiedBy == 2) {
+            area[v][h].src.innerHTML = area[v][h].index;
+            return;
+        }
+        if (area[v][h].occupiedBy == 0) area[v][h].occupy(2);
+        for (let i = -1; i < 2; i++)
+            for (let j = -1; j < 2; j++)
+                if (i !== 0 || j !== 0) {
+                    revealTile(v+i, h+j);
+                }
+}
+
+function flagTile(v, h) {
+    if (area[v][h].flagged == true) {
+        area[v][h].src.innerHTML = icon[0];
+        area[v][h].flagged = false;
+        flags++;
+        return;
+    }
+    if (area[v][h].src.innerHTML !== icon[0]) return;
+    area[v][h].src.innerHTML = icon[4];
+    area[v][h].flagged = true;
+    flags--;
+    goalkeep.innerHTML = `left: `+flags;
 }
 
 function drawMap(X, Y) {
@@ -33,19 +64,16 @@ function drawMap(X, Y) {
             let patrol = i == 0 || i == Y - 1 || j == 0 || j == X - 1 ? true : false;
             let occupation = patrol ? 1 : 0;
             let appendix = patrol ? icon[1] : icon[0];
-            area[i][j] = new Tile(document.createElement("span"), patrol, occupation, false, 0);
+            area[i][j] = new Tile(document.createElement("span"), patrol, occupation, false, 0, false);
             area[i][j].src.appendChild(document.createTextNode(appendix));
             if (!patrol)
                 area[i][j].src.addEventListener("click", () => {
-                    area[i][j].opened = true;
-                    switch(area[i][j].occupiedBy) {
-                        case 0:
-                            /////////////////////////////////////////////////////////////////////////////////////// need some expanding mechanic
-                            break;
-                        case 2:
-                            area[i][j].src.innerHTML = area[i][j].index;
-                            break;
-                    }
+                    revealTile(i, j);
+                });
+                area[i][j].src.addEventListener("contextmenu", (e) => {
+                    e.preventDefault();
+                    if (e.which == 3)
+                        flagTile(i, j);
                 });
             field.appendChild(area[i][j].src);
             if ( i == 0 || i == Y - 1) area[i][j].src.innerHTML = icorners[4];
@@ -108,7 +136,7 @@ function getRandInBounds(margin = 0) {
     return [rV, rH];
 }
 
-function generateMine(count = 1) {
+function generateMine(count) {
     for (let j = 0; j < count; j++)
         for (let i = 0; i < 30; i++) {
             let r = getRandInBounds();
@@ -117,109 +145,30 @@ function generateMine(count = 1) {
                 (i == 29) ? console.error(`failed 2 spawn mine after ${i+1} tries`) : '';
                 continue;
             }
-            bomb.occupy(3);
+            bomb.occupy(3, true);
             for (let i = -1; i < 2; i++)
                 for (let k = -1; k < 2; k++)
                     if (area[r[0]+i][r[1]+k] != bomb && (area[r[0]+i][r[1]+k].occupiedBy == 2 || area[r[0]+i][r[1]+k].occupiedBy == 0)) {
                         area[r[0]+i][r[1]+k].index++;
                         area[r[0]+i][r[1]+k].occupiedBy = 2;
-                        area[r[0]+i][r[1]+k].src.innerHTML = area[r[0]+i][r[1]+k].index;
+                        //area[r[0]+i][r[1]+k].src.innerHTML = area[r[0]+i][r[1]+k].index;
                     }
             break;
         }
 }
 
-function spawnPlayer(v, h) {
-    if (area[v][h].isBorder) return;
-    try {area[plr.v][plr.h].occupy()}
-    catch (e) {};
-    area[v][h].occupy(2);
-    plr.v = v;
-    plr.h = h;
+function startGame() {
+    end = false;
+    generateMine(flags);
+    goalkeep.innerHTML = `left: `+flags;
 }
 
-function startGame(r = false, startSeed = undefined) {
-    generateMine(70);
-}
-
-function tickForward() {
-    if (replaySys.isReplay) {
-        lastDir = replaySys.queue[replaySys.str.charAt][0];
-        if (replaySys.queue[replaySys.str.charAt][1] > 0) {
-            replaySys.queue[replaySys.str.charAt][1]--;
-        }
-        replaySys.str.charAt += 1+replaySys.queue[replaySys.str.charAt][1].length;
-        return;
-    }
-    else if (lastDir == plr.dir) replaySys.count++;
-    else {
-        replaySys.update();
-        lastDir = plr.dir;
-    }
-    switch(lastDir) {
-        case -2:
-            movePlayer(0, -1);
-            break;
-        case -1:
-            movePlayer(-1, 0);
-            break;
-        case 1:
-            movePlayer(1, 0);
-            break;
-        case 2:
-            movePlayer(0, 1);
-            break;
+function endGame() {
+    end = true;
+    for (let i = Y-2; i >= 1; i--)
+        for (let j = 1; j < X-1; j++) {
+            if (area[i][j].occupiedBy == 3) area[i][j].occupy(3);
     }
 }
 
-function endGame(noSign = false) {
-    console.log(replaySys.str.value);
-    let center = Math.floor(X/2), count = 0;
-    const sign = noSign ? `` : `GAME${icon[0]}OVER`;
-    const cycle = setInterval(() => {
-        if (running) clearInterval(cycle);
-        if (count < sign.length) {
-            area[Y-2][center+count-4].src.innerHTML = sign[count];
-            count++;
-            return;
-        }
-        clearInterval(cycle);
-    }, 100);
-}
-
-function init() {
-    resolve = started ? startGame(true) : startGame();
-    started = true;
-}
-
-document.addEventListener('keydown', (e) => {
-    if ((!running && e.key != ' ') || replaySys.isReplay) return;
-    switch(e.key) {
-        case 'ArrowDown':
-            e.preventDefault();
-            if (lastDir == 1) return;
-            plr.dir = -1;
-            break;
-        case 'ArrowLeft':
-            e.preventDefault();
-            if (lastDir == 2) return;
-            plr.dir = -2;
-            break;
-        case 'ArrowUp':
-            e.preventDefault();
-            if (lastDir == -1) return;
-            plr.dir = 1;
-            break;
-        case 'ArrowRight':
-            e.preventDefault();
-            if (lastDir == -2) return;
-            plr.dir = 2;
-            break;
-        case ' ':
-            e.preventDefault();
-            init();
-            break;
-    }
-})
-
-startBtn.addEventListener('click', init);
+startBtn.addEventListener('click', startGame);
