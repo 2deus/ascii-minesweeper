@@ -22,7 +22,7 @@ class Tile {
 }
 
 function revealTile(v, h) {
-    if (area[v][h].occupiedBy == 1 || area[v][h].opened || end) return;
+    if (area[v][h].occupiedBy == 1 || area[v][h].opened || end || area[v][h].flagged) return;
     if (area[v][h].occupiedBy == 3) {
         area[v][h].occupy(3);
         endGame();
