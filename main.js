@@ -150,11 +150,12 @@ function generateMine(count) {
                 (i == 29) ? console.error(`failed 2 spawn mine after ${i+1} tries`) : null;
                 continue;
             }
+            bomb.index = 0;
             bomb.occupy(3, true);
             mineMap.push(bomb);
             for (let i = -1; i < 2; i++)
                 for (let k = -1; k < 2; k++)
-                    if (area[r[0]+i][r[1]+k] != bomb && (area[r[0]+i][r[1]+k].occupiedBy == 2 || area[r[0]+i][r[1]+k].occupiedBy == 0)) {
+                    if (area[r[0]+i][r[1]+k] != bomb && area[r[0]+i][r[1]+k].occupiedBy != 1 && area[r[0]+i][r[1]+k].occupiedBy != 3) {
                         area[r[0]+i][r[1]+k].index++;
                         area[r[0]+i][r[1]+k].occupiedBy = 2;
                         //area[r[0]+i][r[1]+k].src.innerHTML = area[r[0]+i][r[1]+k].index;
