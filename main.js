@@ -1,10 +1,10 @@
-let X = 25, Y = 25, tick = 60;
+let X = 25, Y = 25, tick = 60, end = false, started = false, flags = 50;
 let area = [...Array(Y)].map(e => Array(X)); //get 2d array
 const field = document.getElementsByClassName("field")[0];
 const startBtn = document.getElementsByClassName("starter")[0];
 const goalkeep = document.getElementsByClassName("goalkeeper")[0];
-const icon = ["#", "║", ".", "•", "F"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz";
-let end = false, flags = 50;
+const icon = ["#", "║", ".", "•", "F"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz", mineMap = []
+    ,colorSet = ['#000000', '#0049FF', '#1C8200', '#820000', '#001282', '#670000', '#00887E', '#000000', '#C2C2C2', '#DF5C5C'];
 
 class Tile {
     constructor(src, isBorder, occupiedBy, opened, index, flagged) {
@@ -22,7 +22,7 @@ class Tile {
 }
 
 function revealTile(v, h) {
-    if (area[v][h].occupiedBy == 1 || area[v][h].opened || end || area[v][h].flagged) return;
+    if (area[v][h].occupiedBy == 1 || area[v][h].opened || !started || end || area[v][h].flagged) return;
     if (area[v][h].occupiedBy == 3) {
         area[v][h].occupy(3);
         endGame();
@@ -32,6 +32,7 @@ function revealTile(v, h) {
         area[v][h].src.innerHTML = icon[2];
         if (area[v][h].occupiedBy == 2) {
             area[v][h].src.innerHTML = area[v][h].index;
+            area[v][h].src.style.color = colorSet[area[v][h].index];
             return;
         }
         if (area[v][h].occupiedBy == 0) area[v][h].occupy(2);
@@ -43,10 +44,13 @@ function revealTile(v, h) {
 }
 
 function flagTile(v, h) {
+    if (!started) return;
     if (area[v][h].flagged == true) {
         area[v][h].src.innerHTML = icon[0];
         area[v][h].flagged = false;
         flags++;
+        goalkeep.innerHTML = `left: `+flags;
+        area[v][h].src.style.color = colorSet[0];
         return;
     }
     if (area[v][h].src.innerHTML !== icon[0]) return;
@@ -54,6 +58,7 @@ function flagTile(v, h) {
     area[v][h].flagged = true;
     flags--;
     goalkeep.innerHTML = `left: `+flags;
+    area[v][h].src.style.color = colorSet[9];
 }
 
 function drawMap(X, Y) {
@@ -142,10 +147,11 @@ function generateMine(count) {
             let r = getRandInBounds();
             let bomb = area[r[0]][r[1]];
             if (bomb.occupiedBy == 1 || bomb.occupiedBy == 3) {
-                (i == 29) ? console.error(`failed 2 spawn mine after ${i+1} tries`) : '';
+                (i == 29) ? console.error(`failed 2 spawn mine after ${i+1} tries`) : null;
                 continue;
             }
             bomb.occupy(3, true);
+            mineMap.push(bomb);
             for (let i = -1; i < 2; i++)
                 for (let k = -1; k < 2; k++)
                     if (area[r[0]+i][r[1]+k] != bomb && (area[r[0]+i][r[1]+k].occupiedBy == 2 || area[r[0]+i][r[1]+k].occupiedBy == 0)) {
@@ -159,6 +165,7 @@ function generateMine(count) {
 
 function startGame() {
     end = false;
+    started = true;
     generateMine(flags);
     goalkeep.innerHTML = `left: `+flags;
 }
@@ -171,4 +178,4 @@ function endGame() {
     }
 }
 
-startBtn.addEventListener('click', startGame);
+startBtn.addEventListener('click', startGame, false);

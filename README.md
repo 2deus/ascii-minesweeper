@@ -4,8 +4,8 @@ minesweeper minigame made with a 2d grid of DOM elements .
 unfinished
 # TODO
 - [x] implement flood-fill algorithm
-- [ ] add sanity check for whether the game started to prevent bricking the game by revealing the whole board
-- [ ] add colored numbers
+- [X] add sanity check for whether the game started to prevent bricking the game by revealing the whole board
+- [X] add colored numbers
 - [ ] add game restarting functionality ( cleaning the board )
 - [ ] add win condition
 - [ ] add open area prediction using seeds ( prevents for clicking on a bomb or an index )
