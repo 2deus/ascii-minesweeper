@@ -7,7 +7,7 @@ unfinished
 - [x] add sanity check for whether the game started to prevent bricking the game by revealing the whole board
 - [x] add colored numbers
 - [x] add game restarting functionality ( cleaning the board )
-- [x] add open area prediction using seeds ( prevents for clicking on a bomb or an index )
+- [x] add open area prediction using seeds ( prevents clicking on a bomb or an index )
 - [ ] make area prediction more precise and less buggy
 - [ ] add win condition
 - [ ] expose variables to front-end
