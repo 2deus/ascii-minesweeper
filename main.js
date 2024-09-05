@@ -1,9 +1,9 @@
-let X = 25, Y = 25, tick = 60, end = false, started = false, flags = 50;
+let X = 25, Y = 25, tick = 60, end = false, started = false, clicked = false, flags = 50;
 let area = [...Array(Y)].map(e => Array(X)); //get 2d array
 const field = document.getElementsByClassName("field")[0];
 const startBtn = document.getElementsByClassName("starter")[0];
 const goalkeep = document.getElementsByClassName("goalkeeper")[0];
-const icon = ["#", "║", ".", "•", "F"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz", mineMap = []
+const icon = ["#", "║", ".", "•", "F"], icorners = ["╚", "╝", "╔", "╗", "═"], alphabet = "abcdefghijklmnopqrstuvwxyz"
     ,colorSet = ['#000000', '#0049FF', '#1C8200', '#820000', '#001282', '#670000', '#00887E', '#000000', '#C2C2C2', '#DF5C5C'];
 
 class Tile {
@@ -22,6 +22,19 @@ class Tile {
 }
 
 function revealTile(v, h) {
+    if (area[v][h].occupiedBy != 0 && !clicked) {               // empty area prediction code
+        clicked = true;
+        console.log('clicked at V'+v+' H'+h);
+        for (let i = 1; i <= 30; i++) {
+            console.log('ran '+i);
+            drawMap(X, Y);
+            generateMine(flags);
+            if (area[v][h].occupiedBy == 0) {
+                revealTile(v, h);
+                break;
+            }
+        }
+    }
     if (area[v][h].occupiedBy == 1 || area[v][h].opened || !started || end || area[v][h].flagged) return;
     if (area[v][h].occupiedBy == 3) {
         area[v][h].occupy(3);
@@ -85,14 +98,13 @@ function drawMap(X, Y) {
         }
         field.appendChild(document.createElement("br"));
     }
+    area[0][0].src.innerHTML = icorners[0];
+    area[0][X-1].src.innerHTML = icorners[1];
+    area[Y-1][0].src.innerHTML = icorners[2];
+    area[Y-1][X-1].src.innerHTML = icorners[3];
 }
 
 drawMap(X, Y);
-
-area[0][0].src.innerHTML = icorners[0];
-area[0][X-1].src.innerHTML = icorners[1];
-area[Y-1][0].src.innerHTML = icorners[2];
-area[Y-1][X-1].src.innerHTML = icorners[3];
 
 function getRandomString(n = 6) {
     if (n < 1) return;
@@ -152,7 +164,6 @@ function generateMine(count) {
             }
             bomb.index = 0;
             bomb.occupy(3, true);
-            mineMap.push(bomb);
             for (let i = -1; i < 2; i++)
                 for (let k = -1; k < 2; k++)
                     if (area[r[0]+i][r[1]+k] != bomb && area[r[0]+i][r[1]+k].occupiedBy != 1 && area[r[0]+i][r[1]+k].occupiedBy != 3) {
@@ -165,13 +176,19 @@ function generateMine(count) {
 }
 
 function startGame() {
+    console.clear();
+    flags = 50;
     end = false;
     started = true;
+    clicked = false;
+    drawMap(X, Y);
     generateMine(flags);
     goalkeep.innerHTML = `left: `+flags;
 }
 
 function endGame() {
+    console.log('game ended');
+    clicked = false;
     end = true;
     for (let i = Y-2; i >= 1; i--)
         for (let j = 1; j < X-1; j++) {
